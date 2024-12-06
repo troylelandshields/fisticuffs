@@ -9,7 +9,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function App() {
-  const [backgroundColor, setBackgroundColor] = useState("#010536");
+  // const [backgroundColor, setBackgroundColor] = useState("#ebe4d7");
 
   // Define routes using createBrowserRouter
   const router = createBrowserRouter([
@@ -26,7 +26,7 @@ function App() {
   return (
     <div
       style={{
-        backgroundColor: backgroundColor,
+        // backgroundColor: backgroundColor,
         height: "100%",
         minHeight: "100vh",
         width: "100%",

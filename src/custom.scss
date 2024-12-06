@@ -1,0 +1,42 @@
+
+  $theme-colors: (
+    "primary": #165f65,
+    "secondary": #f38703,
+  );
+
+  $body-bg: #fffaf4;
+
+  @import "../node_modules/bootstrap/scss/bootstrap";
+
+  h1 {
+    color: #165f65;
+  }
+  h3 {
+    color: #f38703;
+  }
+
+  .textarea-custom {
+    border-color: #165f65;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 1rem;
+    margin-top: 8px;
+    margin-bottom: 16px;
+  }
+  
+  .markdown-body {
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    background-color: var(--bs-secondary-bg);
+    border-color: #165f65;
+    text-align: left;
+    margin-bottom: 8px;
+  }
+  .copy-url {
+    padding: 3px;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    border-color: #78b4ba;
+    text-align: left;
+  }

@@ -37,8 +37,10 @@ function NavBar(props) {
   }, [arbitrationId]);
 
   return (
-    <Navbar sticky="top">
-      <Nav></Nav>
+    <Navbar>
+      <Nav>
+        <Nav.Link href="/">Home</Nav.Link>
+      </Nav>
     </Navbar>
   );
 }

@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Button } from "react-bootstrap";
+import { Button, Row, Col } from "react-bootstrap";
 import config from "../../services/config.js";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 function Home(props) {
   const navigate = useNavigate();
 
-  const createArbitration = async () => {
+  const createArbitration = async (user) => {
     const newId = uuidv4();
     try {
       await axios.post(`${config.apiHost}/public/arbitrations`, {
@@ -16,7 +16,7 @@ function Home(props) {
       });
 
       // route to the new arbitration
-      navigate(`/arbitration/${newId}/alice`);
+      navigate(`/arbitration/${newId}/${user}`);
     } catch (e) {
       console.log(e);
     }
@@ -33,29 +33,25 @@ function Home(props) {
         }}
       >
         <img src="/logo-color.png" style={{}} width="500px"></img>
-        <h3
-          style={{
-            color: "white",
-            width: "80%",
-            textAlign: "center",
-            opacity: "30%",
-          }}
-        >
-          powered by AI
-        </h3>
-        <p
-          style={{
-            color: "white",
-            width: "80%",
-            marginBottom: "8px",
-            textAlign: "center",
-          }}
-        >
-          You are Alice. You have a disagreement with Bob. Each of you get a
-          chance to present your case.
-        </p>
 
-        <Button onClick={createArbitration}>Start argument...</Button>
+        <h1 className="">You are Alice. You have a disagreement with Bob.</h1>
+
+        <h3>Start an argument with...</h3>
+        <Row>
+          <Col>
+            <Button
+              className="text-nowrap"
+              onClick={() => createArbitration("alice")}
+            >
+              Someone Else
+            </Button>
+          </Col>
+          <Col>
+            <Button onClick={() => createArbitration("alicebob")}>
+              Myself
+            </Button>
+          </Col>
+        </Row>
       </div>
     </>
   );

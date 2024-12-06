@@ -15,12 +15,16 @@
     "react": "^18.3.1",
     "react-bootstrap": "^2.10.6",
     "react-dom": "^18.3.1",
+    "react-form-wizard-component": "^0.2.7",
     "react-infinite-scroller": "^1.2.6",
     "react-loadingg": "^1.7.2",
+    "react-markdown": "^9.0.1",
     "react-moment": "^1.1.3",
     "react-router-dom": "^7.0.1",
     "react-scripts": "^5.0.1",
+    "react-textarea-autosize": "^8.5.5",
     "react-toastify": "^10.0.6",
+    "sass": "^1.81.0",
     "uuid": "^11.0.3"
   },
   "scripts": {
