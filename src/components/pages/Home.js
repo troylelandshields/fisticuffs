@@ -11,9 +11,9 @@ function Home(props) {
   const createArbitration = async (user) => {
     const newId = uuidv4();
     try {
-      await axios.post(`${config.apiHost}/public/arbitrations`, {
-        id: newId,
-      });
+      // await axios.post(`${config.apiHost}/public/arbitrations`, {
+      //   id: newId,
+      // });
 
       // route to the new arbitration
       navigate(`/arbitration/${newId}/${user}`);

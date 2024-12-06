@@ -117,7 +117,7 @@ function BackgroundStory({
         isActive={isActive}
         onEdit={handleClearBackground}
         loading={loading}
-        final={arbitration.final}
+        final={arbitration?.final}
       >
         Background & Context
       </SectionTitle>
@@ -130,19 +130,19 @@ function BackgroundStory({
             style={{ resize: "none" }}
             value={background}
             onChange={(e) => setBackground(e.target.value)}
-            disabled={arbitration.background_approved || user === "bob"}
+            disabled={arbitration?.background_approved || user === "bob"}
             placeholder={exampleArgument}
           />
         </Col>
       </Row>
       <Row>
         <Col>
-          {!arbitration.background_approved ? (
+          {!arbitration?.background_approved ? (
             <>
               {user.includes("alice") && (
                 <>
-                  {arbitration.background === "" ||
-                  arbitration.background !== background ? (
+                  {arbitration?.background === "" ||
+                  arbitration?.background !== background ? (
                     <Button onClick={handleBackground}>
                       {user === "alice" ? "Submit for Bob's Approval" : "Next"}
                     </Button>
@@ -183,8 +183,39 @@ function BackgroundStory({
               )}
               {user === "bob" && (
                 <>
-                  {!arbitration.background_approved && (
+                  {arbitration?.background &&
+                  !arbitration?.background_approved ? (
                     <Button onClick={handleBackground}>Accept</Button>
+                  ) : (
+                    <>
+                      <Row style={{ marginBottom: "16px" }}>
+                        <Col>
+                          <p className="text-secondary">Waiting for Alice</p>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col>
+                          <div style={{ position: "relative" }}>
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: "50%",
+                                left: "50%",
+                                transform: "translate(-50%, -50%)",
+                                zIndex: 1,
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                width: "100%", // Ensures spinner aligns to full width of container
+                                height: "100%", // Optional, ensures full vertical alignment
+                              }}
+                            >
+                              <LoopCircleLoading />
+                            </div>
+                          </div>
+                        </Col>
+                      </Row>
+                    </>
                   )}
                 </>
               )}
@@ -268,7 +299,7 @@ function Arguments({
         isActive={isActive}
         onEdit={() => handleClearArgument(user)}
         loading={loading}
-        final={arbitration.final}
+        final={arbitration?.final}
       >
         Arguments
       </SectionTitle>
@@ -297,7 +328,7 @@ function Arguments({
           />
           {isActive &&
             user.includes("alice") &&
-            arbitration.alice_argument !== aliceArgument &&
+            arbitration?.alice_argument !== aliceArgument &&
             !loading && (
               <Row>
                 <Col>
@@ -333,7 +364,7 @@ function Arguments({
           />
           {isActive &&
             user.includes("bob") &&
-            arbitration.bob_argument !== bobArgument &&
+            arbitration?.bob_argument !== bobArgument &&
             !loading && (
               <Row>
                 <Col>
@@ -385,7 +416,7 @@ function Decision({ arbitration, handleAcceptFinal, isActive, loading }) {
           )}
         </Col>
       </Row>
-      {arbitration?.arbiter_decision && !arbitration.final && !loading && (
+      {arbitration?.arbiter_decision && !arbitration?.final && !loading && (
         <Row>
           <Col>
             <Button onClick={() => handleAcceptFinal()}>
@@ -451,13 +482,18 @@ function Arbitration(props) {
 
   useEffect(() => {
     if (!arbitration) {
+      setDesiredIdx(0);
       return;
     }
-    if (arbitration.final || readyAndWaiting || arbitration.arbiter_decision) {
+    if (
+      arbitration?.final ||
+      readyAndWaiting ||
+      arbitration?.arbiter_decision
+    ) {
       setDesiredIdx(2);
       return;
     }
-    if (arbitration.background_approved) {
+    if (arbitration?.background_approved) {
       setDesiredIdx(1);
       return;
     }
@@ -471,7 +507,7 @@ function Arbitration(props) {
   ]);
 
   useEffect(() => {
-    if (arbitration && arbitration.arbiter_decision) {
+    if (arbitration && arbitration?.arbiter_decision) {
       // we are no longer ready and waiting
       setReadyAndWaiting(false);
     }
@@ -485,7 +521,17 @@ function Arbitration(props) {
 
   let loadArbitration = async (initial) => {
     try {
-      let resp = await axios.get(`${config.apiHost}/public/arbitrations/${id}`);
+      let resp = await axios.get(
+        `${config.apiHost}/public/arbitrations/${id}`,
+        {
+          validateStatus: (status) => {
+            return (status >= 200 && status < 300) || status === 404;
+          },
+        }
+      );
+      if (resp.status === 404) {
+        return;
+      }
       setArbitration(resp.data);
 
       if (initial) {
@@ -543,11 +589,19 @@ function Arbitration(props) {
 
   const handleSubmitBackground = async () => {
     try {
-      await axios.put(`${config.apiHost}/public/arbitrations/${id}`, {
-        background: background,
-        // all edits invalidate the background agreement
-        background_approved: false,
-      });
+      if (!arbitration) {
+        await axios.post(`${config.apiHost}/public/arbitrations`, {
+          id: id,
+          background: background,
+          background_approved: user === "alicebob",
+        });
+      } else {
+        await axios.put(`${config.apiHost}/public/arbitrations/${id}`, {
+          background: background,
+          // all edits invalidate the background agreement
+          background_approved: false,
+        });
+      }
     } catch (error) {
       console.error("Error agreeing to background:", error);
     } finally {
@@ -573,13 +627,13 @@ function Arbitration(props) {
     let opponentArgument = arbitration[`${opponent}_argument`];
     if (!opponent) {
       if (user === "alice") {
-        opponentArgument = arbitration.bob_argument;
+        opponentArgument = arbitration?.bob_argument;
       } else if (user === "bob") {
-        opponentArgument = arbitration.alice_argument;
+        opponentArgument = arbitration?.alice_argument;
       }
     }
 
-    if (arbitration.background_approved && opponentArgument) {
+    if (arbitration?.background_approved && opponentArgument) {
       setReadyAndWaiting(true);
     }
     try {
@@ -655,174 +709,121 @@ function Arbitration(props) {
       ) : (
         <h1>Alice and Bob had a disagreement:</h1>
       )}
-      {arbitration ? (
-        <FormWizard
-          color="#165f65"
-          ref={wizard}
-          finishButtonTemplate={(finishFn) => {
-            return null;
-          }}
-          nextButtonTemplate={(nextFn) => {
-            return null;
-          }}
-          backButtonTemplate={(backFn) => {
-            return null;
-          }}
-          disableBackOnClickStep={true}
-          style={{}}
-        >
-          <FormWizard.TabContent title="Background" style={{}}>
-            <Row>
-              <Col>
-                <BackgroundStory
-                  arbitration={arbitration}
-                  background={background}
-                  setBackground={setBackground}
-                  user={user}
-                  handleBackground={handleBackground}
-                  handleClearBackground={handleClearBackground}
-                  isActive={desiredIdx === 0}
-                  loading={loading}
-                ></BackgroundStory>
-              </Col>
-            </Row>
-          </FormWizard.TabContent>
-          <FormWizard.TabContent title="Arguments" style={{}}>
-            <Row>
-              <Col>
-                <Row>
-                  <Col>
-                    <BackgroundStory
-                      arbitration={arbitration}
-                      background={background}
-                      setBackground={setBackground}
-                      user={user}
-                      handleBackground={handleBackground}
-                      handleClearBackground={handleClearBackground}
-                      isActive={desiredIdx === 0}
-                    ></BackgroundStory>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col>
-                    <Arguments
-                      arbitration={arbitration}
-                      aliceArgument={aliceArgument}
-                      setAliceArgument={setAliceArgument}
-                      bobArgument={bobArgument}
-                      setBobArgument={setBobArgument}
-                      user={user}
-                      opponentDisplay={opponent}
-                      handleSubmitArgument={handleSubmitArgument}
-                      handleClearArgument={handleClearArgument}
-                      isActive={desiredIdx === 1}
-                    ></Arguments>
-                  </Col>
-                </Row>
-              </Col>
-            </Row>
-          </FormWizard.TabContent>
-          <FormWizard.TabContent title="Final Decision" style={{}}>
-            <Row>
-              <Col>
-                <Row>
-                  <Col>
-                    <BackgroundStory
-                      arbitration={arbitration}
-                      background={background}
-                      setBackground={setBackground}
-                      user={user}
-                      handleBackground={handleBackground}
-                      handleClearBackground={handleClearBackground}
-                      isActive={desiredIdx === 0}
-                    ></BackgroundStory>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col>
-                    <Arguments
-                      arbitration={arbitration}
-                      aliceArgument={aliceArgument}
-                      setAliceArgument={setAliceArgument}
-                      bobArgument={bobArgument}
-                      setBobArgument={setBobArgument}
-                      user={user}
-                      opponentDisplay={opponent}
-                      handleSubmitArgument={handleSubmitArgument}
-                      handleClearArgument={handleClearArgument}
-                      isActive={desiredIdx === 1}
-                    ></Arguments>
-                  </Col>
-                </Row>
-
-                <Row>
-                  <Col>
-                    <Decision
-                      arbitration={arbitration}
-                      isActive={desiredIdx === 2}
-                      loading={loading}
-                      handleAcceptFinal={handleAcceptFinal}
-                    ></Decision>
-                  </Col>
-                </Row>
-              </Col>
-            </Row>
-            {/* <>
-              <Row>
-                <h2>Background & Context</h2>
-                <Col>
-                  <span>{arbitration.background}</span>
-                  {!loading && (
-                    <FontAwesomeIcon
-                      style={
-                        !loading ? { cursor: "pointer" } : { opacity: "20%" }
-                      }
-                      icon={faEdit}
-                      onClick={handleClearBackground}
-                    />
-                  )}
-                </Col>
-              </Row>
+      <FormWizard
+        color="#165f65"
+        ref={wizard}
+        finishButtonTemplate={(finishFn) => {
+          return null;
+        }}
+        nextButtonTemplate={(nextFn) => {
+          return null;
+        }}
+        backButtonTemplate={(backFn) => {
+          return null;
+        }}
+        disableBackOnClickStep={true}
+        style={{}}
+      >
+        <FormWizard.TabContent title="Background" style={{}}>
+          <Row>
+            <Col>
+              <BackgroundStory
+                arbitration={arbitration}
+                background={background}
+                setBackground={setBackground}
+                user={user}
+                handleBackground={handleBackground}
+                handleClearBackground={handleClearBackground}
+                isActive={desiredIdx === 0}
+                loading={loading}
+              ></BackgroundStory>
+            </Col>
+          </Row>
+        </FormWizard.TabContent>
+        <FormWizard.TabContent title="Arguments" style={{}}>
+          <Row>
+            <Col>
               <Row>
                 <Col>
-                  <h2>Your Argument</h2>
-                  <Row>
-                    <Col>
-                      <span>{arbitration[`${user}_argument`]}</span>
-                      {
-                        <FontAwesomeIcon
-                          style={
-                            !loading
-                              ? { cursor: "pointer" }
-                              : { opacity: "20%" }
-                          }
-                          icon={faEdit}
-                          onClick={() => !loading && handleClearArgument(user)}
-                        />
-                      }
-                    </Col>
-                  </Row>
-                </Col>
-                <Col>
-                  <h2>Opponent's Argument</h2>
-                  <p>{arbitration[`${opponent}_argument`]}</p>
+                  <BackgroundStory
+                    arbitration={arbitration}
+                    background={background}
+                    setBackground={setBackground}
+                    user={user}
+                    handleBackground={handleBackground}
+                    handleClearBackground={handleClearBackground}
+                    isActive={desiredIdx === 0}
+                  ></BackgroundStory>
                 </Col>
               </Row>
-              {readyAndWaiting && <LoopCircleLoading />}
-              {arbitration.arbiter_decision && (
-                <div>
-                  <h3>Decision</h3>
-                  <p>{arbitration.arbiter_decision}</p>
-                </div>
-              )}
-            </> */}
-          </FormWizard.TabContent>
-        </FormWizard>
-      ) : (
-        <LoopCircleLoading />
-      )}
+
+              <Row>
+                <Col>
+                  <Arguments
+                    arbitration={arbitration}
+                    aliceArgument={aliceArgument}
+                    setAliceArgument={setAliceArgument}
+                    bobArgument={bobArgument}
+                    setBobArgument={setBobArgument}
+                    user={user}
+                    opponentDisplay={opponent}
+                    handleSubmitArgument={handleSubmitArgument}
+                    handleClearArgument={handleClearArgument}
+                    isActive={desiredIdx === 1}
+                  ></Arguments>
+                </Col>
+              </Row>
+            </Col>
+          </Row>
+        </FormWizard.TabContent>
+        <FormWizard.TabContent title="Final Decision" style={{}}>
+          <Row>
+            <Col>
+              <Row>
+                <Col>
+                  <BackgroundStory
+                    arbitration={arbitration}
+                    background={background}
+                    setBackground={setBackground}
+                    user={user}
+                    handleBackground={handleBackground}
+                    handleClearBackground={handleClearBackground}
+                    isActive={desiredIdx === 0}
+                  ></BackgroundStory>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col>
+                  <Arguments
+                    arbitration={arbitration}
+                    aliceArgument={aliceArgument}
+                    setAliceArgument={setAliceArgument}
+                    bobArgument={bobArgument}
+                    setBobArgument={setBobArgument}
+                    user={user}
+                    opponentDisplay={opponent}
+                    handleSubmitArgument={handleSubmitArgument}
+                    handleClearArgument={handleClearArgument}
+                    isActive={desiredIdx === 1}
+                  ></Arguments>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col>
+                  <Decision
+                    arbitration={arbitration}
+                    isActive={desiredIdx === 2}
+                    loading={loading}
+                    handleAcceptFinal={handleAcceptFinal}
+                  ></Decision>
+                </Col>
+              </Row>
+            </Col>
+          </Row>
+        </FormWizard.TabContent>
+      </FormWizard>
     </>
   );
 }

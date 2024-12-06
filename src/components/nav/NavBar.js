@@ -18,24 +18,6 @@ function getArbitrationIDPathParameter(url) {
 }
 
 function NavBar(props) {
-  let arbitrationId = getArbitrationIDPathParameter(props.location);
-
-  const [arbitration, setArbitration] = useState(null);
-
-  const loadArbitration = () => {
-    axios
-      .get(`${config.apiHost}/public/arbitrations/${arbitrationId}/`)
-      .then((resp) => {
-        setArbitration(resp.data);
-      });
-  };
-
-  useEffect(() => {
-    if (arbitrationId && !arbitration) {
-      loadArbitration();
-    }
-  }, [arbitrationId]);
-
   return (
     <Navbar>
       <Nav>
